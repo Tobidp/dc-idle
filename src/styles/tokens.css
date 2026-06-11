@@ -1,0 +1,17 @@
+/* Tokens de design (especificacao §17). Tema escuro tecnico, vernaculo de painel NOC. */
+:root {
+  --bg: #12161c;
+  --panel: #1a2129;
+  --border: #2a3442;
+  --text: #d7dee7;
+  --text-dim: #8a97a6;
+  --ok: #3fb68b;
+  --warn: #e0a03c;
+  --crit: #d4574e;
+
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --radius: 6px;
+  --gap: 12px;
+}
