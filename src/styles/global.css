@@ -54,6 +54,7 @@ body {
 .panel {
   background: var(--panel); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 14px;
+  scroll-margin-top: 8px;
 }
 .panel-title {
   margin: 0 0 10px; font-size: 13px; font-weight: 700;
@@ -129,6 +130,7 @@ body {
 }
 .banner {
   display: flex; gap: 8px; align-items: flex-start;
+  background: var(--panel); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 10px 12px; font-size: 13px;
 }
 .warn-bg { background: var(--panel); border: 1px solid var(--warn); color: var(--warn); }
@@ -172,6 +174,11 @@ body {
   .cfg-grid { grid-template-columns: 1fr; }
 }
 
+/* ---------- Subnav (Compras) ---------- */
+.subnav { display: flex; flex-wrap: wrap; gap: 6px; }
+.subnav .btn { font-size: 12.5px; padding: 4px 10px; color: var(--text-dim); }
+.subnav .btn:hover:enabled { color: var(--text); }
+
 /* ---------- Rede (M3) ---------- */
 .btn-mini { padding: 2px 10px; min-width: 32px; }
 .link-row { justify-content: space-between; border-top: 1px solid var(--border); padding-top: 6px; }
@@ -179,5 +186,5 @@ body {
 
 /* ---------- M4 ---------- */
 .crit-bg { background: color-mix(in srgb, var(--crit) 14%, var(--panel)); border-color: var(--crit); }
-.log-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
-.log-list li { border-left: 2px solid var(--border); padding-left: 8px; color: var(--dim); }
+.log-list { list-style: none; display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; }
+.log-list li { border-left: 2px solid var(--border); padding-left: 8px; color: var(--text-dim); }

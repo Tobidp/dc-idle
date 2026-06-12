@@ -3,7 +3,7 @@ import { T } from '../i18n/pt-BR'
 import { canAccept, contractsStatus } from '../engine/contracts'
 import { effectsAt } from '../engine/world'
 import { contractById, type ContractType } from '../data/contracts'
-import { fmtMoney } from '../utils/format'
+import { fmtGameTime, fmtMoney } from '../utils/format'
 import { Panel } from './shared/Panel'
 import { RatioMeter } from './shared/RatioMeter'
 import { FileText, ShieldCheck, Wifi } from 'lucide-react'
@@ -134,7 +134,7 @@ export function ContractsTab() {
                     {T.contracts.accept}
                   </button>
                 </div>
-                <p className="dim small mono">{T.contracts.expires(`${ttl}s`)}</p>
+                <p className="dim small mono">{T.contracts.expires(fmtGameTime(ttl))}</p>
                 {reason ? <p className="small warn">{reason}</p> : null}
               </article>
             )

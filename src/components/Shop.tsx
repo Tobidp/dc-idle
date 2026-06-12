@@ -271,9 +271,26 @@ export function Shop() {
   const networkState = useGame((s) => s.network)
   const model = configuring ? modelById[configuring] : null
 
+  const sections: { id: string; label: string }[] = [
+    { id: 'shop-servers', label: T.shop.title },
+    ...(equipment.length > 0 ? [{ id: 'shop-builds', label: T.shop.savedBuilds }] : []),
+    { id: 'shop-infra', label: T.shop.infraTitle },
+    { id: 'shop-net', label: T.shop.netTitle },
+    { id: 'shop-wan', label: T.shop.wanTitle },
+    { id: 'shop-fw', label: T.shop.fwTitle },
+  ]
+
   return (
     <div className="stack">
-      <Panel title={T.shop.title}>
+      <nav className="subnav" aria-label={T.shop.sectionsNav}>
+        {sections.map((sec) => (
+          <button key={sec.id} className="btn" onClick={() => document.getElementById(sec.id)?.scrollIntoView()}>
+            {sec.label}
+          </button>
+        ))}
+      </nav>
+
+      <Panel title={T.shop.title} id="shop-servers">
         <div className="card-grid">
           <WorkUpgradeCard />
           {MODELS.map((m) => (
@@ -284,7 +301,7 @@ export function Shop() {
       </Panel>
 
       {equipment.length > 0 ? (
-        <Panel title={T.shop.savedBuilds}>
+        <Panel title={T.shop.savedBuilds} id="shop-builds">
           <div className="card-grid">
             {equipment.map((g) => (
               <SavedBuildCard key={g.buildId} buildId={g.buildId} />
@@ -293,7 +310,7 @@ export function Shop() {
         </Panel>
       ) : null}
 
-      <Panel title={T.shop.infraTitle}>
+      <Panel title={T.shop.infraTitle} id="shop-infra">
         <div className="card-grid">
           <InfraCard
             kind="comercial"
@@ -321,7 +338,7 @@ export function Shop() {
         </p>
       </Panel>
 
-      <Panel title={T.shop.netTitle}>
+      <Panel title={T.shop.netTitle} id="shop-net">
         <div className="card-grid">
           <SwitchCard model="sl24" />
           <SwitchCard model="sl48t" />
@@ -329,7 +346,7 @@ export function Shop() {
         </div>
       </Panel>
 
-      <Panel title={T.shop.wanTitle}>
+      <Panel title={T.shop.wanTitle} id="shop-wan">
         <div className="card-grid">
           <SimpleNetCard
             purchase={{ t: 'router', model: 'r1f' }}
@@ -349,7 +366,7 @@ export function Shop() {
         </div>
       </Panel>
 
-      <Panel title={T.shop.fwTitle}>
+      <Panel title={T.shop.fwTitle} id="shop-fw">
         <div className="card-grid">
           <ScrubbingCard />
           {(['fws', 'fwm', 'fwl'] as const).map((id) => (

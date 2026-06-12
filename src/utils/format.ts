@@ -55,7 +55,13 @@ export function fmtGameTime(realSeconds: number): string {
   const hours = realSeconds
   const days = hours / 24
   const years = days / 360
-  if (years >= 1) return years.toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' anos de jogo'
-  if (days >= 1) return days.toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + ' dias de jogo'
+  if (years >= 1) {
+    const v = years.toLocaleString('pt-BR', { maximumFractionDigits: 1 })
+    return `${v} ${v === '1' ? 'ano' : 'anos'} de jogo`
+  }
+  if (days >= 1) {
+    const v = days.toLocaleString('pt-BR', { maximumFractionDigits: 0 })
+    return `${v} ${v === '1' ? 'dia' : 'dias'} de jogo`
+  }
   return hours.toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + ' h de jogo'
 }
