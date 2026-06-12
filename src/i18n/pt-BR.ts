@@ -29,6 +29,10 @@ export const T = {
     logTitle: 'Eventos',
     logEmpty: 'Sem eventos registrados.',
     incidentBanner: (n: number) => `${n} incidente(s) ativo(s)`,
+    transitEdgeDown: (links: number, sessions: number, cost: string) =>
+      `Borda WAN inoperante: ${links} links para ${sessions} sessões BGP — trânsito de ${cost}/mês pago sem uso. Remova links ou adicione roteador.`,
+    transitIdle: (idle: string, total: string, cost: string) =>
+      `Trânsito ocioso: ${idle} Gbps sem contrato de ${total} contratados — ${cost}/mês a mais. Devolva links em Compras → Borda WAN.`,
     marketEvent: { vazamento: 'Mercado aquecido (+20% preços)', recessao: 'Recessão (−20% preços)' } as Record<string, string>,
     pue: 'PUE',
     capacityTitle: 'Capacidade instalada',
@@ -72,7 +76,7 @@ export const T = {
     wanTitle: 'Borda WAN',
     wanLinksCard: 'Links de trânsito',
     wanLinksDesc: (price: string) =>
-      `Capacidade contratada por operadora. Sem custo de ativação; trânsito ${price}/Gbps/mês. Cada link consome 1 sessão BGP de roteador.`,
+      `Capacidade contratada por operadora. Sem custo de ativação; trânsito ${price}/Gbps/mês sobre o total contratado (usado ou não). Cada link consome 1 sessão BGP de roteador.`,
     fwTitle: 'Segurança',
     infra: {
       comercial: 'Sala comercial',

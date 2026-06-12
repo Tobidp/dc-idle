@@ -95,6 +95,23 @@ export function wanStatus(net: Network): WanStatus {
   }
 }
 
+export type TransitWarning = 'edge' | 'idle' | null
+
+/**
+ * Desperdicio de transito (UX): o transito cobra sobre a capacidade contratada,
+ * entao avisa quando ha links pagos sem borda operante ('edge') ou com folga
+ * grande em relacao ao alocado em contratos ('idle').
+ */
+export function transitWarning(net: Network, allocGbps: number): TransitWarning {
+  const wan = wanStatus(net)
+  if (wan.linkGbps === 0) return null
+  if (wan.linksOverSessions) return 'edge'
+  const idleGbps = wan.linkGbps - allocGbps
+  if (idleGbps / wan.linkGbps >= BAL.transitIdleWarn.frac && idleGbps >= BAL.transitIdleWarn.minGbps)
+    return 'idle'
+  return null
+}
+
 export function firewallThroughputGbps(net: Network): number {
   return (
     FIREWALLS.fws.throughputGbps * net.firewalls.fws +

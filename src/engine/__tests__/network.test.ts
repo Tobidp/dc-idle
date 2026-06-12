@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { accessLayer, networkUnits, wanStatus } from '../network'
+import { accessLayer, networkUnits, transitWarning, wanStatus } from '../network'
 import { networkScore } from '../../data/network'
 import { newNetwork, type Network } from '../types'
 
@@ -67,6 +67,30 @@ describe('wanStatus', () => {
     const w = wanStatus(net({ routers: { r1f: 0, r2f: 1 }, links: { l1: 3, l10: 1, l100: 0 } }))
     expect(w.linksOverSessions).toBe(false)
     expect(w.egressGbps).toBe(13)
+  })
+})
+
+describe('transitWarning', () => {
+  it('null sem links contratados', () => {
+    expect(transitWarning(net({ routers: { r1f: 1, r2f: 0 } }), 0)).toBeNull()
+  })
+
+  it('edge quando links excedem as sessoes BGP (transito pago sem egress)', () => {
+    const n = net({ routers: { r1f: 1, r2f: 0 }, links: { l1: 2, l10: 0, l100: 0 } })
+    expect(transitWarning(n, 0)).toBe('edge')
+  })
+
+  it('idle com folga >= 50% do contratado e >= 10 Gbps', () => {
+    const n = net({ routers: { r1f: 0, r2f: 1 }, links: { l1: 0, l10: 0, l100: 1 } })
+    expect(transitWarning(n, 10)).toBe('idle')
+  })
+
+  it('null com folga pequena em fracao ou em Gbps', () => {
+    const r2f = { r1f: 0, r2f: 1 }
+    // 10 Gbps contratados, 8 alocados: folga 20% < 50%
+    expect(transitWarning(net({ routers: r2f, links: { l1: 0, l10: 1, l100: 0 } }), 8)).toBeNull()
+    // 1 Gbps contratado e nada alocado: folga 100%, mas < 10 Gbps (sem nag no early game)
+    expect(transitWarning(net({ routers: r2f, links: { l1: 1, l10: 0, l100: 0 } }), 0)).toBeNull()
   })
 })
 

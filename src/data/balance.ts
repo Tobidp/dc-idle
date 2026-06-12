@@ -97,4 +97,7 @@ export const BAL = {
   scrubbingMonthly: 1000,
   scrubbingMitigationGbps: 50,
   generatorPrice: 25000,
+
+  /** Alerta de transito ocioso no Painel: folga minima (fracao do contratado e Gbps). */
+  transitIdleWarn: { frac: 0.5, minGbps: 10 },
 } as const

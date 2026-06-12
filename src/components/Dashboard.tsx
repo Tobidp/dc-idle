@@ -2,8 +2,10 @@ import { useGame } from '../state/store'
 import { T } from '../i18n/pt-BR'
 import * as eco from '../engine/economy'
 import { coolingStatus, feedKw, itKwOf, throttleMult, totals } from '../engine/site'
-import { accessLayer, nicDemandGbps } from '../engine/network'
+import { accessLayer, nicDemandGbps, transitWarning, wanStatus } from '../engine/network'
+import { allocOf } from '../engine/contracts'
 import { effectsAt } from '../engine/world'
+import { TRANSIT_PER_GBPS_MONTH } from '../data/network'
 import { fmtMoney, fmtPerSec, fmtShort, fmtWatts } from '../utils/format'
 import { Panel } from './shared/Panel'
 import { RatioMeter } from './shared/RatioMeter'
@@ -23,6 +25,10 @@ export function Dashboard() {
   const access = accessLayer(s.network, nicDemandGbps(s.builds, s.equipment))
   const effects = effectsAt(s, s.lastTs)
   const activeEvent = s.marketEvent && s.lastTs < s.marketEvent.untilTs ? s.marketEvent.kind : null
+  const wan = wanStatus(s.network)
+  const allocGbps = allocOf(s.contracts).gbps
+  const tWarn = transitWarning(s.network, allocGbps)
+  const fmtGbps = (n: number) => n.toLocaleString('pt-BR', { maximumFractionDigits: 1 })
 
   return (
     <div className="stack">
@@ -41,6 +47,23 @@ export function Dashboard() {
         </div>
       ) : null}
       {activeEvent ? <div className="banner">{T.dashboard.marketEvent[activeEvent]}</div> : null}
+
+      {tWarn === 'edge' ? (
+        <div className="banner crit-bg" role="alert">
+          <AlertTriangle size={16} strokeWidth={1.5} aria-hidden />{' '}
+          {T.dashboard.transitEdgeDown(wan.linkCount, wan.bgpSessions, fmtMoney(wan.linkGbps * TRANSIT_PER_GBPS_MONTH))}
+        </div>
+      ) : null}
+      {tWarn === 'idle' ? (
+        <div className="banner warn-bg" role="alert">
+          <AlertTriangle size={16} strokeWidth={1.5} aria-hidden />{' '}
+          {T.dashboard.transitIdle(
+            fmtGbps(wan.linkGbps - allocGbps),
+            fmtGbps(wan.linkGbps),
+            fmtMoney((wan.linkGbps - allocGbps) * TRANSIT_PER_GBPS_MONTH),
+          )}
+        </div>
+      ) : null}
 
       {throttle < 1 ? (
         <div className="banner warn-bg" role="alert">
