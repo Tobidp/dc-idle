@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import * as eco from '../economy'
 import { M1_PRESET_TO_PARTS, makeBuild } from '../build'
-import { newInfra, type Build, type EquipGroup, type Infra, type SaveV2 } from '../types'
+import { newInfra, newNetwork, type Build, type EquipGroup, type Infra, type SaveV4 } from '../types'
 
-type EcoState = Pick<SaveV2, 'builds' | 'equipment' | 'infra' | 'tempC'>
+type EcoState = Pick<SaveV4, 'builds' | 'equipment' | 'infra' | 'tempC' | 'network' | 'contracts'>
 
 function stateOf(
   counts: Record<string, number>,
@@ -17,7 +17,7 @@ function stateOf(
     builds.push(b)
     equipment.push({ buildId: b.id, count })
   }
-  return { builds, equipment, infra: { ...newInfra(), ...infra }, tempC }
+  return { builds, equipment, infra: { ...newInfra(), ...infra }, tempC, network: newNetwork(), contracts: [] }
 }
 
 describe('totals', () => {

@@ -4,7 +4,8 @@
 import { BAL } from '../data/balance'
 import { CRAC, DEDICATED_CIRCUIT, PREMISES, RACKS, UPS } from '../data/infra'
 import { computeBuild } from './build'
-import type { Build, EquipGroup, Infra, SaveV2 } from './types'
+import { networkUnits } from './network'
+import type { Build, EquipGroup, Infra, Network, SaveV4 } from './types'
 
 export interface UnitItem {
   buildId: string
@@ -91,8 +92,8 @@ export function feedKw(infra: Infra): number {
   return PREMISES.comercial.feedKw
 }
 
-export function upsCapacityKw(infra: Infra): number {
-  return infra.upsModules * UPS.moduleKw
+export function upsCapacityKw(infra: Infra, modulesDown = 0): number {
+  return Math.max(0, infra.upsModules - modulesDown) * UPS.moduleKw
 }
 
 // ---------- Refrigeracao, PUE e termica ----------
@@ -110,10 +111,10 @@ export interface CoolingStatus {
 }
 
 /** Calor = potencia eletrica IT (1 W eletrico ≈ 1 W termico; especificacao §5). */
-export function coolingStatus(infra: Infra, itKw: number): CoolingStatus {
+export function coolingStatus(infra: Infra, itKw: number, cracDown = 0): CoolingStatus {
   const heatKw = itKw
   const ambientKw = PREMISES[infra.premises].ambientCoolKw
-  const cracCapacityKw = infra.cracUnits * CRAC.coolKw
+  const cracCapacityKw = Math.max(0, infra.cracUnits - cracDown) * CRAC.coolKw
   const beyondAmbient = Math.max(0, heatKw - ambientKw)
   const cracRemovedKw = Math.min(beyondAmbient, cracCapacityKw)
   const cracElecKw = cracRemovedKw / CRAC.cop
@@ -150,6 +151,41 @@ export function phaseOf(infra: Infra, hasEquipment: boolean): 1 | 2 | 3 {
 
 // ---------- Visao consolidada ----------
 
+export interface Totals {
+  vcpu: number
+  ramGb: number
+  storageTb: number
+  watts: number
+  units: number
+  u: number
+}
+
+export function totals(builds: Build[], equipment: EquipGroup[]): Totals {
+  const byId = new Map(builds.map((b) => [b.id, b]))
+  const t: Totals = { vcpu: 0, ramGb: 0, storageTb: 0, watts: 0, units: 0, u: 0 }
+  for (const g of equipment) {
+    const b = byId.get(g.buildId)
+    if (!b) continue
+    const s = computeBuild(b.parts)
+    t.vcpu += s.vcpu * g.count
+    t.ramGb += s.ramGb * g.count
+    t.storageTb += s.storageTb * g.count
+    t.watts += s.watts * g.count
+    t.units += g.count
+    t.u += s.uSize * g.count
+  }
+  return t
+}
+
+/** Servidores + equipamentos de rede (todos ocupam U e consomem W). */
+export function allUnits(save: { builds: Build[]; equipment: EquipGroup[]; network: Network }): UnitItem[] {
+  return [...unitsOf(save.builds, save.equipment), ...networkUnits(save.network)]
+}
+
+export function itKwOf(save: { builds: Build[]; equipment: EquipGroup[]; network: Network }): number {
+  return allUnits(save).reduce((acc, it) => acc + it.watts, 0) / 1000
+}
+
 export interface SiteStatus {
   placement: Placement
   itKw: number
@@ -160,8 +196,8 @@ export interface SiteStatus {
   phase: 1 | 2 | 3
 }
 
-export function siteStatus(save: Pick<SaveV2, 'builds' | 'equipment' | 'infra' | 'tempC'>): SiteStatus {
-  const items = unitsOf(save.builds, save.equipment)
+export function siteStatus(save: Pick<SaveV4, 'builds' | 'equipment' | 'infra' | 'tempC' | 'network'>): SiteStatus {
+  const items = allUnits(save)
   const itKw = items.reduce((acc, it) => acc + it.watts, 0) / 1000
   const placement = placeUnits(save.infra, items)
   return {

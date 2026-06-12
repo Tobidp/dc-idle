@@ -3,7 +3,7 @@
 
 import { BAL } from '../data/balance'
 import { netPerSec } from './economy'
-import type { SaveV2 } from './types'
+import type { SaveV4 } from './types'
 
 export interface OfflineResult {
   elapsedSeconds: number
@@ -13,7 +13,7 @@ export interface OfflineResult {
 }
 
 export function computeOffline(
-  save: Pick<SaveV2, 'lastTs' | 'builds' | 'equipment' | 'infra' | 'tempC'>,
+  save: Pick<SaveV4, 'lastTs' | 'builds' | 'equipment' | 'infra' | 'tempC' | 'network' | 'contracts'>,
   nowMs: number,
   capSeconds: number = BAL.offline.capRealSeconds,
 ): OfflineResult {

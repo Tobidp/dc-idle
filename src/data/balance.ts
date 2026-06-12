@@ -47,4 +47,54 @@ export const BAL = {
 
   tickMs: 1000,
   autosaveMs: 30000,
+
+  /** M4 — SLA (§10): janela mensal por contrato; multas em creditos sobre a fatura. */
+  sla: {
+    windowSec: 720,
+    tiers: [
+      { maxShortfallPp: 0.1, creditPct: 10 },
+      { maxShortfallPp: 1.0, creditPct: 25 },
+    ],
+    worstCreditPct: 50,
+    cancelChance: 0.5,
+    repPenalty: 5,
+    repOnCompletion: 1,
+  },
+
+  /** M4 — incidentes (§13). Taxas em eventos/ano de jogo (ano = 8.760 h). */
+  incidents: {
+    hoursPerYear: 8760,
+    mttrGameH: 2,
+    utilityOutagesPerYear: 2,
+    utilityDurGameH: [1, 6] as [number, number],
+    genStartupGameH: 30 / 3600,
+    upsAutonomyGameH: 10 / 60,
+    dieselPerGameH: 40,
+    ddosPerYearBase: 4,
+    ddosPerYearPerRep: 0.16,
+    ddosDurGameH: [2, 12] as [number, number],
+    ddosGbps: [1, 200] as [number, number],
+    fiberPerYearPerLink: 1,
+    fiberDurGameH: [2, 8] as [number, number],
+    psuAfr: 0.02,
+    upsCracAfr: 0.03,
+    humanErrorPerAction: 0.02,
+    humanErrorDurGameH: 1,
+  },
+
+  /** M4 — mercado dinamico (§10). Tempos em horas de jogo (= s reais). */
+  market: {
+    regenGameH: [24, 72] as [number, number],
+    offerTtlGameH: [24, 72] as [number, number],
+    maxOffers: 6,
+    priceJitter: 0.2,
+    eventCheckGameH: 168,
+    eventChance: 0.25,
+    eventDurGameH: 168,
+    startingReputation: 20,
+  },
+
+  scrubbingMonthly: 1000,
+  scrubbingMitigationGbps: 50,
+  generatorPrice: 25000,
 } as const

@@ -3,11 +3,19 @@ import { computeOffline } from '../offline'
 import { netPerSec } from '../economy'
 import { M1_PRESET_TO_PARTS, makeBuild } from '../build'
 import { BAL } from '../../data/balance'
-import { newInfra, type SaveV2 } from '../types'
+import { newInfra, newNetwork, type SaveV4 } from '../types'
 
-function baseState(): Pick<SaveV2, 'lastTs' | 'builds' | 'equipment' | 'infra' | 'tempC'> {
+function baseState(): Pick<SaveV4, 'lastTs' | 'builds' | 'equipment' | 'infra' | 'tempC' | 'network' | 'contracts'> {
   const b = makeBuild(M1_PRESET_TO_PARTS['rbt2'])
-  return { lastTs: 0, builds: [b], equipment: [{ buildId: b.id, count: 1 }], infra: newInfra(), tempC: 22 }
+  return {
+    lastTs: 0,
+    builds: [b],
+    equipment: [{ buildId: b.id, count: 1 }],
+    infra: newInfra(),
+    tempC: 22,
+    network: newNetwork(),
+    contracts: [],
+  }
 }
 
 describe('computeOffline', () => {

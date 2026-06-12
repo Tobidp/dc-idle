@@ -13,8 +13,8 @@ Especificação completa: [`docs/especificacao-v1.0.md`](docs/especificacao-v1.0
 | M0 | Scaffold, tokens visuais, CI → GitHub Pages | concluído |
 | M1 | Core loop: Work, compras (presets RB-T2/HN-1100), tick, save/load, progresso offline, limite do circuito doméstico (1,2 kW) | concluído |
 | M2 | Instalações, racks (PDU), UPS, CRAC, PUE calculado, térmica/throttle, configurador de componentes | concluído |
-| M3 | Rede (switches/roteadores), oversubscription, contratos, SLA | pendente |
-| M4 | Mercado dinâmico, incidentes, multas | pendente |
+| M3 | Rede (switches/roteadores/firewalls), oversubscription/score, borda WAN, contratos estáticos, SLA simples | concluído |
+| M4 | Mercado dinâmico, incidentes (§13), janela de SLA com multas/créditos, gerador, scrubbing, reputação | concluído |
 | M5 | Equipe/turnos, mineração, VPS, cache embarcado | pendente |
 | M6 | Tier I–IV, redundância 2N, prestígio | pendente |
 | M7 | Balanceamento, acessibilidade, i18n, QA | pendente |
@@ -29,7 +29,7 @@ Nota de design (§19 da especificação): a renda passiva atual ("hospedagem avu
    ```bash
    git init
    git add -A
-   git commit -m "M0-M2"
+   git commit -m "M0-M4"
    git branch -M main
    git remote add origin git@github.com:SEU_USUARIO/SEU_REPO.git
    git push -u origin main
@@ -75,7 +75,13 @@ src/
 - **Instalações:** Quarto (1,2 kW, bancada 8U, 1 vaga de rack) → Circuito dedicado (7 kW) → Sala comercial (30 kW, 6 vagas, dissipação ambiente 3 kW, aluguel $250/mês). Fases F1–F3 derivadas da infraestrutura.
 - **Energia e PUE:** UPS modular (≈18 kW/módulo, perdas de 5% no caminho) e CRAC (remove 30 kW térmicos, COP 3,0). PUE calculado: (IT + CRAC + perdas UPS) / IT — aparece na conta de energia.
 - **Térmica:** calor = potência IT; déficit de refrigeração eleva a temperatura (+1 °C/h por 10% de déficit); throttle escalonado em 27/32/35 °C (×0,9/×0,7/×0,4) reduz a renda — comprar além do cooling tem consequência observável, não bloqueio.
-- **Configurador:** CPU, DIMMs, NIC, 2ª PSU e NVMe por modelo (RB-T2, HN-1100, HN-2200); preço/consumo/capacidade compostos peça a peça; preço progressivo por modelo (× 1,12ⁿ). Saves v1 migram automaticamente para builds equivalentes.
+- **Configurador:** CPU, DIMMs, NIC, 2ª PSU e NVMe por modelo (RB-T2, HN-1100, HN-2200); preço/consumo/capacidade compostos peça a peça; preço progressivo por modelo (× 1,12ⁿ). Saves v1/v2 migram automaticamente.
+- **Rede (M3):** switches SL-24G/48T/48X com uplinks ativos + LACP (IEEE 802.1AX); ratio de oversubscription = downlink em uso / uplink agregado; score do site 100/90/75/50% (≤3:1 / ≤6 / ≤12 / >12). NICs sem porta de switch ficam desconectadas e não atendem contratos. Switches, roteadores e firewalls ocupam U, consomem W e entram na térmica e nos bloqueios físicos.
+- **Borda WAN:** roteadores RC-1F/RC-2F (capacidade + sessões BGP, RFC 4271) e links de trânsito 1/10/100 Gbps a $800/Gbps/mês; egress utilizável = min(links, roteadores); links acima das sessões BGP derrubam a borda.
+- **Contratos:** 8 tipos da especificação com recursos, SLA alvo e exigências (firewall com throughput suficiente, VLAN = ter switch, Tier/certificação bloqueados até o M6). Qualidade = throttle térmico × score de rede (se sensível) × incidentes; a receita efetiva escala com a qualidade. vCPU alocada sai da hospedagem avulsa.
+- **Mercado dinâmico (M4):** ofertas com preço ±20% e duração por tipo, regeneradas a cada 1–3 dias de jogo e com expiração de 24–72 h de jogo; quantidade ∝ reputação (0–100). Eventos de mercado ("vazamento na concorrente" +20%, "recessão" −20%) por 1 semana de jogo.
+- **Incidentes (M4, §13):** RNG semeado e persistido; queda da concessionária (2×/ano, ponte UPS de 10 min de jogo → gerador VG-150 com partida de 30 s e diesel $40/h de jogo), DDoS (frequência ∝ reputação, 1–200 Gbps, mitigado por firewalls + scrubbing $1.000/mês), rompimento de fibra por link, falha de PSU em hosts de fonte única, falha de módulo UPS/CRAC (MTTR 2 h) e erro humano (2% por ação manual de rede). Log persistente (200 eventos).
+- **SLA (M4, §10):** janela mensal por contrato; uptime medido acumula throttle, score < 75% (sensíveis), DDoS não mitigado/fibra (expostos) e quedas de site. Multas em créditos no fechamento: ≤0,1 p.p. → 10%; ≤1,0 p.p. → 25%; acima → 50% + risco de rescisão (50%) e −5 reputação. Conclusão no prazo: +1 reputação.
 - **Offline:** ganho em forma fechada, teto de 12 h, relatório ao retornar; abas suspensas por >10 min usam a mesma rota.
 - **Save:** autosave 30 s + `beforeunload` + `visibilitychange`; schema validado (zod); save corrompido vira backup em `dcidle.save.v1.corrupt`; export/import em Base64.
 

@@ -13,12 +13,8 @@ function range(n: number): number[] {
 
 export function Configurator(props: { model: ServerModel; onClose: () => void }) {
   const { model } = props
-  const money = useGame((s) => s.money)
-  const builds = useGame((s) => s.builds)
-  const equipment = useGame((s) => s.equipment)
-  const infra = useGame((s) => s.infra)
-  const tempC = useGame((s) => s.tempC)
-  const buyBuild = useGame((s) => s.buyBuild)
+  const store = useGame()
+  const buyBuild = store.buyBuild
 
   const [parts, setParts] = useState<BuildParts>({
     modelId: model.id,
@@ -36,7 +32,7 @@ export function Configurator(props: { model: ServerModel; onClose: () => void })
 
   const valid = validateParts(parts).length === 0
   const stats = useMemo(() => (valid ? computeBuild(parts) : null), [parts, valid])
-  const check = eco.canBuyBuild({ money, builds, equipment, infra, tempC }, parts)
+  const check = eco.canBuyBuild(store, parts)
   const reason = check.reason ? T.shop.reasons[check.reason] : null
 
   return (

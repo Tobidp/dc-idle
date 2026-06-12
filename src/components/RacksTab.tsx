@@ -1,11 +1,15 @@
 import { useGame } from '../state/store'
 import { T } from '../i18n/pt-BR'
 import { siteStatus } from '../engine/site'
+import { accessLayer, firewallThroughputGbps, nicDemandGbps, switchCount, wanStatus } from '../engine/network'
+import { ddosMitigationGbps } from '../engine/world'
 import { PREMISES, RACKS } from '../data/infra'
-import { fmtWatts } from '../utils/format'
+import { fmtMoney, fmtWatts } from '../utils/format'
 import { Panel } from './shared/Panel'
 import { RatioMeter } from './shared/RatioMeter'
 import { AlertTriangle, Thermometer } from 'lucide-react'
+
+const gbps = (n: number) => `${n.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} Gbps`
 
 const kw = (n: number) => fmtWatts(n * 1000)
 
@@ -13,9 +17,13 @@ export function RacksTab() {
   const builds = useGame((s) => s.builds)
   const equipment = useGame((s) => s.equipment)
   const infra = useGame((s) => s.infra)
+  const network = useGame((s) => s.network)
+  const scrubbing = useGame((s) => s.scrubbing)
   const tempC = useGame((s) => s.tempC)
 
-  const site = siteStatus({ builds, equipment, infra, tempC })
+  const site = siteStatus({ builds, equipment, infra, tempC, network })
+  const access = accessLayer(network, nicDemandGbps(builds, equipment))
+  const wan = wanStatus(network)
   const { placement, cooling } = site
   const coolingTotal = cooling.ambientKw + cooling.cracCapacityKw
   const tempState = tempC >= 32 ? 'crit' : tempC >= 27 ? 'warn' : 'ok'
@@ -80,6 +88,56 @@ export function RacksTab() {
             <p className="dim small">{T.racks.benchHint}</p>
           </article>
         </div>
+      </Panel>
+
+      <Panel title={T.netpanel.title}>
+        {switchCount(network) === 0 ? <p className="dim small">{T.netpanel.noSwitch}</p> : null}
+        {access.unconnectedGbps > 0 ? (
+          <div className="banner warn-bg" role="alert">
+            <AlertTriangle size={16} strokeWidth={1.5} aria-hidden />{' '}
+            {T.netpanel.unconnected(access.unconnectedGbps.toLocaleString('pt-BR'))}
+          </div>
+        ) : null}
+        <RatioMeter
+          label={T.netpanel.ports}
+          used={access.demandGbps}
+          max={Math.max(access.portCapacityGbps, 0.001)}
+          format={(n) => gbps(n)}
+        />
+        <dl className="kv small">
+          <dt>{T.netpanel.uplink}</dt>
+          <dd className="mono">{gbps(access.uplinkGbps)}</dd>
+          <dt>{T.netpanel.ratio}</dt>
+          <dd className="mono">
+            {access.ratio === Infinity ? '∞' : access.ratio.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}:1
+          </dd>
+          <dt>{T.netpanel.score}</dt>
+          <dd className={'mono ' + (access.score < 90 ? 'crit' : access.score < 100 ? 'warn' : 'ok')}>{access.score}%</dd>
+        </dl>
+      </Panel>
+
+      <Panel title={T.netpanel.wanTitle}>
+        {wan.linksOverSessions ? (
+          <div className="banner warn-bg" role="alert">
+            <AlertTriangle size={16} strokeWidth={1.5} aria-hidden /> {T.netpanel.overSessions}
+          </div>
+        ) : null}
+        <dl className="kv small">
+          <dt>{T.netpanel.routers}</dt>
+          <dd className="mono">{gbps(wan.routerCapacityGbps)}</dd>
+          <dt>{T.netpanel.sessions}</dt>
+          <dd className="mono">{wan.linkCount}/{wan.bgpSessions}</dd>
+          <dt>{T.netpanel.links}</dt>
+          <dd className="mono">{gbps(wan.linkGbps)}</dd>
+          <dt>{T.netpanel.egress}</dt>
+          <dd className="mono">{gbps(wan.egressGbps)}</dd>
+          <dt>{T.netpanel.transit}</dt>
+          <dd className="mono crit">{fmtMoney(wan.transitPerSec * 720)}{T.shop.perMonth}</dd>
+          <dt>{T.netpanel.firewall}</dt>
+          <dd className="mono">{gbps(firewallThroughputGbps(network))}</dd>
+          <dt>{T.netpanel.mitigation}</dt>
+          <dd className="mono">{gbps(ddosMitigationGbps(network, scrubbing))}</dd>
+        </dl>
       </Panel>
     </div>
   )
